@@ -1,5 +1,40 @@
 # AI-Commerce-Agent
 
+## Phase 1 Backend Foundation
+
+The Phase 1 backend is a FastAPI application with Pydantic Settings, SQLAlchemy 2.x,
+Alembic, and PostgreSQL configuration. Later commerce and agent features are not
+implemented yet.
+
+### Run locally
+
+From the repository root in PowerShell:
+
+```powershell
+.venv\Scripts\Activate.ps1
+pip install -r backend\requirements.txt
+Set-Location backend
+uvicorn app.main:app --reload
+```
+
+Phase 1 expects PostgreSQL to be installed and running locally on port `5432`,
+with the database and credentials configured in `backend/.env`.
+
+The API is available at `http://127.0.0.1:8000`. The root endpoint, health check,
+Swagger UI, and ReDoc are available at `/`, `/health`, `/docs`, and `/redoc`.
+
+Run the tests from the repository root with:
+
+```powershell
+.venv\Scripts\python.exe -m pytest backend\tests -q
+```
+
+Alembic commands should be run from `backend`, for example:
+
+```powershell
+alembic upgrade head
+```
+
 An **agentic commerce platform** that uses AI to help merchants increase revenue through intelligent product discovery, upselling, cross-selling, conversational shopping, and AI-assisted checkout.
 
 The system combines a **LangChain-based AI agent**, merchant product catalog, customer context, revenue intelligence, policy-based guardrails, human approval, Razorpay test-mode payments, and a complete audit trail.
