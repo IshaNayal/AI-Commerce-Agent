@@ -1,10 +1,17 @@
 from logging.config import fileConfig
+from pathlib import Path
+import sys
+
+alembic_path = Path(__file__).resolve()
+sys.path.insert(0, str(alembic_path.parents[2]))
+sys.path.insert(0, str(alembic_path.parents[1]))
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from app.config import settings
 from app.database.base import Base
+from app import models  # pyright: ignore[reportUnusedImport]
 
 config = context.config
 config.set_main_option(

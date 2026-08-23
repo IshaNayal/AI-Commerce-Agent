@@ -9,7 +9,12 @@ logger = logging.getLogger(__name__)
 async def unhandled_exception_handler(
     request: Request, exc: Exception
 ) -> JSONResponse:
-    logger.exception("Unhandled API error for %s %s", request.method, request.url.path)
+    logger.exception(
+        "Unhandled API error for %s %s",
+        request.method,
+        request.url.path,
+        exc_info=(type(exc), exc, exc.__traceback__),
+    )
     return JSONResponse(
         status_code=500,
         content={"error": {"code": "INTERNAL_SERVER_ERROR", "message": "Internal server error"}},
