@@ -8,6 +8,7 @@ from ..schemas.inventory import InventoryCreate, InventoryUpdate
 
 
 class InventoryRepository:
+
     def __init__(self, db: Session):
         self.db = db
 
@@ -23,7 +24,11 @@ class InventoryRepository:
 
         return inventory
 
-    def get_by_id(self, inventory_id: UUID) -> Inventory | None:
+    def get_by_id(
+        self,
+        inventory_id: UUID,
+    ) -> Inventory | None:
+
         statement = select(Inventory).where(
             Inventory.id == inventory_id
         )
@@ -34,8 +39,32 @@ class InventoryRepository:
         self,
         product_id: UUID,
     ) -> Inventory | None:
+
         statement = select(Inventory).where(
             Inventory.product_id == product_id
+        )
+
+        return self.db.scalar(statement)
+
+    def get_by_product_id_for_update(
+        self,
+        product_id: UUID,
+    ) -> Inventory | None:
+        """
+        Fetch inventory while locking the database row.
+
+        FOR UPDATE prevents another transaction from modifying
+        this inventory row until the current transaction completes.
+
+        This is used for atomic stock reservation.
+        """
+
+        statement = (
+            select(Inventory)
+            .where(
+                Inventory.product_id == product_id
+            )
+            .with_for_update()
         )
 
         return self.db.scalar(statement)
@@ -45,6 +74,7 @@ class InventoryRepository:
         inventory: Inventory,
         data: InventoryUpdate,
     ) -> Inventory:
+
         update_data = data.model_dump(
             exclude_unset=True
         )
@@ -57,13 +87,21 @@ class InventoryRepository:
 
         return inventory
 
-    def save(self, inventory: Inventory) -> Inventory:
+    def save(
+        self,
+        inventory: Inventory,
+    ) -> Inventory:
+
         self.db.add(inventory)
         self.db.commit()
         self.db.refresh(inventory)
 
         return inventory
 
-    def delete(self, inventory: Inventory) -> None:
+    def delete(
+        self,
+        inventory: Inventory,
+    ) -> None:
+
         self.db.delete(inventory)
         self.db.commit()

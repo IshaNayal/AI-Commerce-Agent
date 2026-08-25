@@ -1,4 +1,5 @@
-fastapi
+fastapi>=0.116.1,<0.117
+starlette>=0.47.0,<0.48
 uvicorn[standard]
 pydantic
 email-validator
@@ -8,4 +9,9 @@ psycopg[binary]
 alembic
 python-dotenv
 pytest
-httpx
+httpx<0.28
+
+chromadb
+langchain-openai
+
+langgraph

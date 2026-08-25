@@ -35,3 +35,4 @@ build/
 
 # Local databases
 *.db
+.chroma/

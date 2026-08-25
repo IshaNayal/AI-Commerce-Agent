@@ -7,6 +7,7 @@ from ..models.product import Product
 from ..repositories.product import ProductRepository
 from ..repositories.merchant import MerchantRepository
 from ..schemas.product import ProductCreate, ProductUpdate
+from .vector_service import VectorService
 
 
 class ProductService:
@@ -24,6 +25,7 @@ class ProductService:
     def __init__(self, db: Session):
         self.product_repository = ProductRepository(db)
         self.merchant_repository = MerchantRepository(db)
+        self.vector_service = VectorService()
 
     def create(self, data: ProductCreate) -> Product:
         """
@@ -86,7 +88,12 @@ class ProductService:
         # 5. Create product
         # ---------------------------------------------------------
 
-        return self.product_repository.create(data)
+        product = self.product_repository.create(data)
+        try:
+            self.vector_service.index_product(product)
+        except Exception:
+            pass # Fails gracefully if Chroma is not ready
+        return product
 
     def get_by_id(
         self,
@@ -211,10 +218,12 @@ class ProductService:
                     f"already exists for this merchant"
                 )
 
-        return self.product_repository.update(
-            product,
-            data,
-        )
+        updated_product = self.product_repository.update(product, data)
+        try:
+            self.vector_service.index_product(updated_product)
+        except Exception:
+            pass # Fails gracefully
+        return updated_product
 
     def delete(
         self,
@@ -225,3 +234,23 @@ class ProductService:
         """
 
         self.product_repository.delete(product)
+
+    def search_products(self, query: str, merchant_id: UUID, top_k: int = 5) -> list[Product]:
+        """
+        Perform semantic search for products.
+        """
+        try:
+            product_ids = self.vector_service.semantic_search(query, merchant_id, top_k)
+        except Exception:
+            return []
+            
+        if not product_ids:
+            return []
+            
+        # Fetch products from DB
+        products = []
+        for pid in product_ids:
+            p = self.get_by_id(pid)
+            if p:
+                products.append(p)
+        return products

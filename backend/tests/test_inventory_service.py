@@ -237,3 +237,132 @@ def test_negative_inventory_update_fails(db):
                 quantity=-1,
             ),
         )
+
+
+def test_reserve_stock_decreases_inventory(db):
+    merchant = create_merchant(db)
+
+    product = create_product(
+        db,
+        merchant.id,
+    )
+
+    service = InventoryService(db)
+
+    service.create(
+        InventoryCreate(
+            product_id=product.id,
+            quantity=10,
+        )
+    )
+
+    result = service.reserve_stock(
+        product.id,
+        3,
+    )
+
+    assert result.quantity == 7
+
+    inventory = service.get_by_product_id(
+        product.id
+    )
+
+    assert inventory is not None
+    assert inventory.quantity == 7
+
+
+
+
+
+def test_reserve_stock_prevents_overselling(db):
+    merchant = create_merchant(db)
+    product = create_product(
+        db,
+        merchant.id,
+    )
+
+    service = InventoryService(db)
+
+    service.create(
+        InventoryCreate(
+            product_id=product.id,
+            quantity=5,
+        )
+    )
+
+    with pytest.raises(ValueError, match="Insufficient inventory"):
+        service.reserve_stock(
+            product.id,
+            6,
+        )
+
+
+def test_reserve_stock_rejects_zero_quantity(db):
+    merchant = create_merchant(db)
+    product = create_product(
+        db,
+        merchant.id,
+    )
+
+    service = InventoryService(db)
+
+    service.create(
+        InventoryCreate(
+            product_id=product.id,
+            quantity=5,
+        )
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Quantity must be greater than zero",
+    ):
+        service.reserve_stock(
+            product.id,
+            0,
+        )
+
+
+def test_reserve_stock_rejects_negative_quantity(db):
+    merchant = create_merchant(db)
+    product = create_product(
+        db,
+        merchant.id,
+    )
+
+    service = InventoryService(db)
+
+    service.create(
+        InventoryCreate(
+            product_id=product.id,
+            quantity=5,
+        )
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Quantity must be greater than zero",
+    ):
+        service.reserve_stock(
+            product.id,
+            -1,
+        )
+
+
+def test_reserve_stock_requires_inventory(db):
+    merchant = create_merchant(db)
+    product = create_product(
+        db,
+        merchant.id,
+    )
+
+    service = InventoryService(db)
+
+    with pytest.raises(
+        ValueError,
+        match="does not exist",
+    ):
+        service.reserve_stock(
+            product.id,
+            1,
+        )

@@ -246,3 +246,37 @@ class InventoryService:
         return self.inventory_repository.save(
             inventory
         )
+
+    def reserve_stock(
+        self,
+        product_id: UUID,
+        quantity: int,
+    ) -> Inventory:
+        """Reserve inventory while locking the inventory row."""
+
+        if quantity <= 0:
+            raise ValueError(
+                "Quantity must be greater than zero"
+            )
+
+        inventory = (
+            self.inventory_repository
+            .get_by_product_id_for_update(product_id)
+        )
+
+        if inventory is None:
+            raise ValueError(
+                f"Inventory for product '{product_id}' does not exist"
+            )
+
+        if inventory.quantity < quantity:
+            raise ValueError(
+                f"Insufficient inventory. "
+                f"Available: {inventory.quantity}, "
+                f"requested: {quantity}"
+            )
+
+        inventory.quantity -= quantity
+        self.inventory_repository.db.flush()
+
+        return inventory
